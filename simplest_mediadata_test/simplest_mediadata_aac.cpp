@@ -62,7 +62,7 @@ int getADTSframe(unsigned char* buffer, int buf_size, unsigned char* data ,int* 
 	return 0;
 }
 
-int simplest_aac_parser(char *url)
+int simplest_aac_parser(const char *url, int max=100)
 {
 	int data_size = 0;
 	int size = 0;
@@ -88,10 +88,11 @@ int simplest_aac_parser(char *url)
 	while(!feof(ifile)){
 		data_size = fread(aacbuffer+offset, 1, 1024*1024-offset, ifile);
 		unsigned char* input_data = aacbuffer;
+		int ret  = -1;
 
 		while(1)
-		{
-			int ret=getADTSframe(input_data, data_size, aacframe, &size);
+		{	
+			ret=getADTSframe(input_data, data_size, aacframe, &size);
 			if(ret==-1){
 				break;
 			}else if(ret==1){
@@ -135,7 +136,14 @@ int simplest_aac_parser(char *url)
 			data_size -= size;
 			input_data += size;
 			cnt++;
+
+			if(cnt > max)
+			{
+				ret = -1;  break;
+			}
 		}   
+
+		if(-1 == ret) break;
 
 	}
 	fclose(ifile);
@@ -144,3 +152,12 @@ int simplest_aac_parser(char *url)
 
 	return 0;
 }
+
+#ifdef __UNITEST__
+int main()
+{
+    simplest_aac_parser("nocturne.aac", 20);
+
+    return 0;
+}
+#endif
